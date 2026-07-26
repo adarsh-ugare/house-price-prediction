@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI House Price Predictor - Premium Analytics Dashboard</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI House Price Predictor</h1>
+            <p class="subtitle">Enter home attributes to forecast real-estate valuation using optimized Random Forest regression</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Left Side: Interactive Input Controls -->
+            <div class="glass-card">
+                <h2 class="card-title">
+                    <svg style="width:24px;height:24px;fill:currentColor" viewBox="0 0 24 24">
+                        <path d="M12,3L2,12H5V20H19V12H22L12,3M12,7.7C14.1,7.7 15.8,9.4 15.8,11.5C15.8,14.5 12,18 12,18C12,18 8.2,14.5 8.2,11.5C8.2,9.4 9.9,7.7 12,7.7M12,10A1.5,1.5 0 0,0 10.5,11.5A1.5,1.5 0 0,0 12,13A1.5,1.5 0 0,0 13.5,11.5A1.5,1.5 0 0,0 12,10Z" />
+                    </svg>
+                    Property Specifications
+                </h2>
+
+                <form id="predictor-form" onsubmit="event.preventDefault();">
+                    
+                    <!-- Group 1: Essential Property Details -->
+                    <div class="input-group-section">
+                        <h3 class="section-subtitle">Property Attributes</h3>
+                        
+                        <!-- RM Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="RM">Average Rooms (RM) <span class="help-icon" title="Average number of rooms per dwelling">?</span></label>
+                                <span class="value-display" id="RM-val">6.28</span>
+                            </div>
+                            <input type="range" id="RM" step="0.05">
+                        </div>
+
+                        <!-- AGE Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="AGE">Age of Building (AGE) <span class="help-icon" title="Proportion of owner-occupied units built prior to 1940">?</span></label>
+                                <span class="value-display" id="AGE-val">68.5%</span>
+                            </div>
+                            <input type="range" id="AGE" step="0.5">
+                        </div>
+                    </div>
+
+                    <!-- Group 2: Key Location Parameters -->
+                    <div class="input-group-section">
+                        <h3 class="section-subtitle">Location & Environment</h3>
+                        
+                        <!-- DIS Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="DIS">Distance to Work Centres (DIS) <span class="help-icon" title="Weighted distances to five Boston employment centres (miles)">?</span></label>
+                                <span class="value-display" id="DIS-val">3.79 mi</span>
+                            </div>
+                            <input type="range" id="DIS" step="0.1">
+                        </div>
+
+                        <!-- CRIM Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="CRIM">Local Crime Rate (CRIM) <span class="help-icon" title="Per capita crime rate by town">?</span></label>
+                                <span class="value-display" id="CRIM-val">3.61%</span>
+                            </div>
+                            <input type="range" id="CRIM" step="0.05">
+                        </div>
+                    </div>
+
+                    <!-- Group 3: Neighborhood Dynamics -->
+                    <div class="input-group-section">
+                        <h3 class="section-subtitle">Neighborhood Quality</h3>
+                        
+                        <!-- PTRATIO Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="PTRATIO">Pupil-Teacher Ratio (PTRATIO) <span class="help-icon" title="Pupil-teacher ratio by town school system">?</span></label>
+                                <span class="value-display" id="PTRATIO-val">18.45</span>
+                            </div>
+                            <input type="range" id="PTRATIO" step="0.1">
+                        </div>
+
+                        <!-- TAX Slider -->
+                        <div class="input-control">
+                            <div class="label-wrapper">
+                                <label for="TAX">Property Tax Rate (TAX) <span class="help-icon" title="Full-value property-tax rate per $10,000">?</span></label>
+                                <span class="value-display" id="TAX-val">$408</span>
+                            </div>
+                            <input type="range" id="TAX" step="1">
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Advanced Section -->
+                    <div class="advanced-header" onclick="toggleAdvancedPanel()">
+                        <span>Advanced Parameters (Less Common Settings)</span>
+                        <span class="advanced-toggle-icon" id="adv-arrow">▼</span>
+                    </div>
+
+                    <div class="advanced-panel" id="adv-panel">
+                        <div class="input-group-section" style="margin-top: 1rem;">
+                            <!-- ZN -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="ZN">Residential Land Zoned (ZN) <span class="help-icon" title="Proportion of residential land zoned for lots over 25,000 sq.ft.">?</span></label>
+                                    <span class="value-display" id="ZN-val">11.36%</span>
+                                </div>
+                                <input type="range" id="ZN" step="1">
+                            </div>
+
+                            <!-- INDUS -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="INDUS">Industrial Acres % (INDUS) <span class="help-icon" title="Proportion of non-retail business acres per town">?</span></label>
+                                    <span class="value-display" id="INDUS-val">11.1%</span>
+                                </div>
+                                <input type="range" id="INDUS" step="0.1">
+                            </div>
+
+                            <!-- CHAS -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="CHAS">Tract Bounds Charles River? (CHAS) <span class="help-icon" title="Charles River dummy variable (1 if tract bounds river; 0 otherwise)">?</span></label>
+                                </div>
+                                <select id="CHAS">
+                                    <option value="0">No, inland tract</option>
+                                    <option value="1">Yes, riverfront tract</option>
+                                </select>
+                            </div>
+
+                            <!-- NOX -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="NOX">Nitric Oxide Conc. (NOX) <span class="help-icon" title="Nitric oxides concentration (parts per 10 million)">?</span></label>
+                                    <span class="value-display" id="NOX-val">0.55</span>
+                                </div>
+                                <input type="range" id="NOX" step="0.01">
+                            </div>
+
+                            <!-- RAD -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="RAD">Highway Access Index (RAD) <span class="help-icon" title="Index of accessibility to radial highways">?</span></label>
+                                    <span class="value-display" id="RAD-val">9.5</span>
+                                </div>
+                                <input type="range" id="RAD" step="1">
+                            </div>
+
+                            <!-- B -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="B">Demographic Index (B) <span class="help-icon" title="1000(Bk - 0.63)^2 where Bk is the proportion of Black residents by town">?</span></label>
+                                    <span class="value-display" id="B-val">356.6</span>
+                                </div>
+                                <input type="range" id="B" step="1">
+                            </div>
+
+                            <!-- LSTAT -->
+                            <div class="input-control">
+                                <div class="label-wrapper">
+                                    <label for="LSTAT">Lower Status Pop % (LSTAT) <span class="help-icon" title="Percentage of lower socio-economic status of the population">?</span></label>
+                                    <span class="value-display" id="LSTAT-val">12.65%</span>
+                                </div>
+                                <input type="range" id="LSTAT" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-predict" type="button" onclick="performPrediction()" id="btn-submit">
+                        Forecast Property Value
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Side: Outputs, Price Gauge & Visualization Charts -->
+            <div class="output-card">
+                <!-- Result Panel -->
+                <div class="glass-card result-container">
+                    <div class="result-label">Estimated Market Value</div>
+                    <div class="result-value" id="price-result">$24,500</div>
+                    <div class="result-badge" id="price-class">Standard Market Avg</div>
+                </div>
+
+                <!-- Analysis Charts -->
+                <div class="glass-card">
+                    <h2 class="card-title">
+                        <svg style="width:24px;height:24px;fill:currentColor" viewBox="0 0 24 24">
+                            <path d="M16,11.78L20.22,16L21.62,14.58L16,8.97L11.03,13.95L7.42,10.34L2,15.76L3.41,17.17L7.42,13.16L11.03,16.77L16,11.78M21,5H3C1.9,5 1,5.9 1,7V19A2,2 0 0,0 3,21H21A2,2 0 0,0 23,19V7C23,5.9 22.1,5 21,5Z" />
+                        </svg>
+                        Valuation Diagnostics
+                    </h2>
+
+                    <!-- Radar Comparison Chart -->
+                    <div class="chart-container">
+                        <div class="chart-title">Comparison vs. Neighborhood Average</div>
+                        <canvas id="comparisonRadarChart" style="max-height: 280px;"></canvas>
+                    </div>
+
+                    <!-- Feature importance explanation or dynamic note -->
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.4;">
+                        * Neighborhood average references values representing median statistics of historical Boston real estate records. Room density, taxation structure, and pupil-teacher ratio indicators scale proportionally.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script logic for dynamic configurations and Chart updates -->
+    <script>
+        let modelMetadata = {};
+        let radarChart = null;
+
+        // Load metadata and initialize sliders on load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/metadata');
+                const result = await response.json();
+                
+                if (result.success) {
+                    modelMetadata = result;
+                    initializeUI(result.defaults, result.min_max);
+                    
+                    // Trigger initial prediction using default values
+                    performPrediction();
+                } else {
+                    console.error("Failed to load model metadata.");
+                }
+            } catch (err) {
+                console.error("Error loading model configurations:", err);
+            }
+        });
+
+        // Toggle advanced panel visibility
+        function toggleAdvancedPanel() {
+            const panel = document.getElementById('adv-panel');
+            const arrow = document.getElementById('adv-arrow');
+            panel.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        // Initialize form controls based on ML model defaults & min-max bounds
+        function initializeUI(defaults, minMax) {
+            const sliders = ['RM', 'AGE', 'DIS', 'CRIM', 'PTRATIO', 'TAX', 'ZN', 'INDUS', 'NOX', 'RAD', 'B', 'LSTAT'];
+            
+            sliders.forEach(id => {
+                const el = document.getElementById(id);
+                if (el && minMax[id]) {
+                    el.min = minMax[id].min;
+                    el.max = minMax[id].max;
+                    el.value = defaults[id];
+                    
+                    // Bind readout text update event
+                    updateReadout(id, el.value);
+                    el.addEventListener('input', (e) => {
+                        updateReadout(id, e.target.value);
+                    });
+                }
+            });
+            
+            // Set initial value for select option
+            const selectEl = document.getElementById('CHAS');
+            if (selectEl) {
+                selectEl.value = Math.round(defaults['CHAS'] || 0);
+            }
+        }
+
+        // Format and update readout labels
+        function updateReadout(id, val) {
+            const readout = document.getElementById(`${id}-val`);
+            if (!readout) return;
+            
+            const num = parseFloat(val);
+            if (id === 'RM' || id === 'NOX') {
+                readout.textContent = num.toFixed(2);
+            } else if (id === 'AGE' || id === 'CRIM' || id === 'ZN' || id === 'INDUS' || id === 'LSTAT') {
+                readout.textContent = `${num.toFixed(1)}%`;
+            } else if (id === 'DIS') {
+                readout.textContent = `${num.toFixed(1)} mi`;
+            } else if (id === 'TAX') {
+                readout.textContent = `$${Math.round(num)}`;
+            } else {
+                readout.textContent = num.toFixed(1);
+            }
+        }
+
+        // Fetch prediction from server
+        async function performPrediction() {
+            const submitBtn = document.getElementById('btn-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Calculating Valuation...";
+            
+            // Read inputs
+            const payload = {
+                CRIM: parseFloat(document.getElementById('CRIM').value),
+                ZN: parseFloat(document.getElementById('ZN').value),
+                INDUS: parseFloat(document.getElementById('INDUS').value),
+                CHAS: parseInt(document.getElementById('CHAS').value),
+                NOX: parseFloat(document.getElementById('NOX').value),
+                RM: parseFloat(document.getElementById('RM').value),
+                AGE: parseFloat(document.getElementById('AGE').value),
+                DIS: parseFloat(document.getElementById('DIS').value),
+                RAD: parseInt(document.getElementById('RAD').value),
+                TAX: parseFloat(document.getElementById('TAX').value),
+                PTRATIO: parseFloat(document.getElementById('PTRATIO').value),
+                B: parseFloat(document.getElementById('B').value),
+                LSTAT: parseFloat(document.getElementById('LSTAT').value)
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResult(data.prediction);
+                    updateRadarChart(payload);
+                } else {
+                    alert("Prediction Error: " + data.error);
+                }
+            } catch (err) {
+                console.error("Connection failed:", err);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Forecast Property Value";
+            }
+        }
+
+        // Display price output and update classification badges
+        function displayResult(val) {
+            const priceEl = document.getElementById('price-result');
+            const badgeEl = document.getElementById('price-class');
+            
+            // Format to standard dollar display (e.g. $24,500)
+            priceEl.textContent = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                maximumFractionDigits: 0
+            }).format(val);
+            
+            // Assign classifications based on price thresholds (values based on Boston MEDV distribution)
+            if (val < 16000) {
+                badgeEl.textContent = "Affordable Budget Class";
+                badgeEl.style.color = "#fb923c"; // Orange
+                badgeEl.style.borderColor = "rgba(251, 146, 60, 0.2)";
+                badgeEl.style.backgroundColor = "rgba(251, 146, 60, 0.15)";
+            } else if (val >= 16000 && val < 32000) {
+                badgeEl.textContent = "Standard Market Avg";
+                badgeEl.style.color = "#10b981"; // Emerald Green
+                badgeEl.style.borderColor = "rgba(16, 185, 129, 0.2)";
+                badgeEl.style.backgroundColor = "rgba(16, 185, 129, 0.15)";
+            } else {
+                badgeEl.textContent = "Executive Premium Tier";
+                badgeEl.style.color = "#818cf8"; // Indigo Accent
+                badgeEl.style.borderColor = "rgba(129, 140, 248, 0.2)";
+                badgeEl.style.backgroundColor = "rgba(129, 140, 248, 0.15)";
+            }
+        }
+
+        // Render and update Chart.js Radar visualization
+        function updateRadarChart(inputs) {
+            if (!modelMetadata.defaults) return;
+            
+            const defs = modelMetadata.defaults;
+            
+            // Scaled features for comparison on a 0-100 radar axis
+            const labels = ['Rooms Count', 'Property Age', 'Accessibility', 'Local Taxes', 'Pupil-Teacher Ratio', 'Lower Status %'];
+            
+            const scale = (val, id) => {
+                const range = modelMetadata.min_max[id];
+                if (!range) return 50;
+                return ((val - range.min) / (range.max - range.min)) * 100;
+            };
+
+            const inputData = [
+                scale(inputs.RM, 'RM'),
+                scale(inputs.AGE, 'AGE'),
+                scale(inputs.DIS, 'DIS'),
+                scale(inputs.TAX, 'TAX'),
+                scale(inputs.PTRATIO, 'PTRATIO'),
+                scale(inputs.LSTAT, 'LSTAT')
+            ];
+
+            const baselineData = [
+                scale(defs.RM, 'RM'),
+                scale(defs.AGE, 'AGE'),
+                scale(defs.DIS, 'DIS'),
+                scale(defs.TAX, 'TAX'),
+                scale(defs.PTRATIO, 'PTRATIO'),
+                scale(defs.LSTAT, 'LSTAT')
+            ];
+
+            if (radarChart) {
+                // Update existing chart data
+                radarChart.data.datasets[0].data = inputData;
+                radarChart.data.datasets[1].data = baselineData;
+                radarChart.update();
+            } else {
+                // Construct new Radar Chart
+                const ctx = document.getElementById('comparisonRadarChart').getContext('2d');
+                radarChart = new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Your Selection',
+                                data: inputData,
+                                fill: true,
+                                backgroundColor: 'rgba(20, 184, 166, 0.2)',
+                                borderColor: 'rgb(20, 184, 166)',
+                                pointBackgroundColor: 'rgb(20, 184, 166)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgb(20, 184, 166)'
+                            },
+                            {
+                                label: 'Neighborhood Avg',
+                                data: baselineData,
+                                fill: true,
+                                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                                borderColor: 'rgba(99, 102, 241, 0.8)',
+                                pointBackgroundColor: 'rgba(99, 102, 241, 1)',
+                                pointBorderColor: '#fff',
+                                pointHoverBackgroundColor: '#fff',
+                                pointHoverBorderColor: 'rgba(99, 102, 241, 1)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#9ca3af',
+                                    font: { family: 'Plus Jakarta Sans', size: 10 }
+                                }
+                            }
+                        },
+                        scales: {
+                            r: {
+                                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                angleLines: { color: 'rgba(255, 255, 255, 0.08)' },
+                                pointLabels: {
+                                    color: '#9ca3af',
+                                    font: { family: 'Plus Jakarta Sans', size: 10, weight: '600' }
+                                },
+                                ticks: { display: false },
+                                min: 0,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
